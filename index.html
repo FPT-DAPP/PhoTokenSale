@@ -1,0 +1,165 @@
+<html>
+
+<body>
+
+	<h1>Welcome to Pho ICO</h1>
+	<h4>One token, one shot. We guarantee!</h4>
+	<form id="form">
+		<label>How many tokens</label>:
+		<input type="number" value="200" id="amount" min="1" autofocus required><br>
+		<button type="submit" id="buy">Buy</button>
+	</form>
+
+	<script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.37/dist/web3.min.js"></script>
+	<script>
+		var ABI = [
+			{
+				"constant": false,
+				"inputs": [
+					{
+						"name": "beneficiary",
+						"type": "address"
+					}
+				],
+				"name": "buyTokens",
+				"outputs": [],
+				"payable": true,
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"payable": true,
+				"stateMutability": "payable",
+				"type": "fallback"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"name": "purchaser",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"name": "beneficiary",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"name": "value",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "TokensPurchased",
+				"type": "event"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "rate",
+				"outputs": [
+					{
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "token",
+				"outputs": [
+					{
+						"name": "",
+						"type": "address"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "wallet",
+				"outputs": [
+					{
+						"name": "",
+						"type": "address"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"constant": true,
+				"inputs": [],
+				"name": "weiRaised",
+				"outputs": [
+					{
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"payable": false,
+				"stateMutability": "view",
+				"type": "function"
+			}
+		];
+
+		if (!web3 || !web3.currentProvider) {
+			alert("Please install & login Metamask and reload the page.");
+		} else {
+			window.web3 = new Web3(web3.currentProvider);
+		}
+
+		document.getElementById("form").addEventListener("submit", async function (e) {
+			e.preventDefault();
+
+			if (!web3 || !web3.currentProvider) {
+				alert("Please install & login Metamask and reload the page.");
+				return;
+			}
+
+			var contract = new web3.eth.Contract(ABI, "0xe905f3e11907676e618f562b6117269c3959b7e9");
+			var rate = await contract.methods.rate().call();
+
+			var tokenAmount = parseFloat(document.getElementById("amount").value);
+			var decimals = 18; // should get from token contract
+			var ethAmountInWei = (tokenAmount / rate) * Math.pow(10, decimals);
+
+
+			web3.eth.getAccounts(async (err, value) => {
+				if (!value || !value.length) {
+					alert("Please login & create an account with Metamask then reload the page.");
+					return;
+				}
+
+				var ethPayer = value[0];
+				var tokenReceiver = "0x2E9f5b9938a7EAB4e2a860DB47EEDa392c788fDC";
+				var receipts = await contract.methods.buyTokens(tokenReceiver).send({
+					value: ethAmountInWei,
+					from: ethPayer,
+					gas: 1000000, // gas limit
+					gasPrice: '25000000000' // 25 gwei
+				});
+
+				alert("You bought it, congratulation!");
+			});
+
+		})
+
+	</script>
+</body>
+
+</html>
